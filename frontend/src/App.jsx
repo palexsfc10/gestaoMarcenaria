@@ -5,10 +5,12 @@ import "./App.css";
 function App() {
   const [logged, setLogged] = useState(false);
   const [screen, setScreen] = useState("login");
+  const [company, setCompany] = useState(null);
   const [clientId, setClientId] = useState(null);
 
   async function login(e) {
     e.preventDefault();
+
     const form = new FormData(e.target);
 
     try {
@@ -16,8 +18,17 @@ function App() {
         username: form.get("username"),
         password: form.get("password"),
       });
+
       setLogged(true);
-      setScreen("setup");
+
+      const companyResponse = await api.get("/company");
+
+      if (companyResponse.data) {
+        setCompany(companyResponse.data);
+        setScreen("home");
+      } else {
+        setScreen("setup");
+      }
     } catch {
       alert("Login inválido");
     }
@@ -25,9 +36,10 @@ function App() {
 
   async function saveCompany(e) {
     e.preventDefault();
+
     const form = new FormData(e.target);
 
-    await api.post("/company/setup", {
+    const response = await api.post("/company/setup", {
       name: form.get("name"),
       document: form.get("document"),
       phone: form.get("phone"),
@@ -39,12 +51,14 @@ function App() {
       default_notes: form.get("default_notes"),
     });
 
-    alert("Empresa salva!");
-    setScreen("client");
+    setCompany(response.data);
+    alert("Dados da empresa salvos!");
+    setScreen("home");
   }
 
   async function saveClient(e) {
     e.preventDefault();
+
     const form = new FormData(e.target);
 
     const response = await api.post("/clients", {
@@ -61,7 +75,26 @@ function App() {
 
   async function saveBudget(e) {
     e.preventDefault();
+
     const form = new FormData(e.target);
+
+    const items = [
+      {
+        description: form.get("item1_description"),
+        quantity: Number(form.get("item1_quantity")),
+        unit_price: Number(form.get("item1_price")),
+      },
+      {
+        description: form.get("item2_description"),
+        quantity: Number(form.get("item2_quantity") || 0),
+        unit_price: Number(form.get("item2_price") || 0),
+      },
+      {
+        description: form.get("item3_description"),
+        quantity: Number(form.get("item3_quantity") || 0),
+        unit_price: Number(form.get("item3_price") || 0),
+      },
+    ].filter((item) => item.description && item.quantity > 0);
 
     const response = await api.post("/budgets", {
       client_id: clientId,
@@ -74,28 +107,31 @@ function App() {
       notes: form.get("notes"),
       discount: Number(form.get("discount") || 0),
       extra_cost: Number(form.get("extra_cost") || 0),
-      items: [
-        {
-          description: form.get("item1_description"),
-          quantity: Number(form.get("item1_quantity")),
-          unit_price: Number(form.get("item1_price")),
-        },
-        {
-          description: form.get("item2_description"),
-          quantity: Number(form.get("item2_quantity") || 0),
-          unit_price: Number(form.get("item2_price") || 0),
-        },
-      ].filter((item) => item.description && item.quantity > 0),
+      items,
     });
 
     alert("Orçamento criado!");
     window.open(`http://localhost:8000/budgets/${response.data.id}/pdf`, "_blank");
+    setScreen("home");
+  }
+
+  function startNewBudget() {
+    setClientId(null);
+    setScreen("client");
+  }
+
+  function logout() {
+    setLogged(false);
+    setScreen("login");
+    setCompany(null);
+    setClientId(null);
   }
 
   if (!logged) {
     return (
       <div className="container">
         <h1>OrçaFlow</h1>
+
         <h2>Login</h2>
 
         <form onSubmit={login}>
@@ -109,41 +145,78 @@ function App() {
 
   return (
     <div className="container">
-      <h1>OrçaFlow</h1>
+      <header className="topbar">
+        <div>
+          <h1>OrçaFlow</h1>
+          {company && <p>{company.name}</p>}
+        </div>
 
-      <nav>
-        <button onClick={() => setScreen("setup")}>Empresa</button>
-        <button onClick={() => setScreen("client")}>Cliente</button>
-        <button onClick={() => setScreen("budget")}>Orçamento</button>
-      </nav>
+        <button className="secondary" onClick={logout}>
+          Sair
+        </button>
+      </header>
+
+      {screen !== "setup" && (
+        <nav>
+          <button onClick={() => setScreen("home")}>Início</button>
+          <button onClick={startNewBudget}>Novo orçamento</button>
+          <button onClick={() => setScreen("setup")}>Dados da empresa</button>
+        </nav>
+      )}
+
+      {screen === "home" && (
+        <section>
+          <h2>Bem-vindo{company ? `, ${company.name}` : ""}</h2>
+
+          <p>
+            Comece criando um novo orçamento para seu cliente. Depois de preencher os dados,
+            o sistema gera um PDF pronto para enviar.
+          </p>
+
+          <button className="primary-action" onClick={startNewBudget}>
+            + Novo orçamento
+          </button>
+        </section>
+      )}
 
       {screen === "setup" && (
         <>
-          <h2>Setup da Marcenaria</h2>
+          <h2>Dados da Marcenaria</h2>
+
+          <p>Preencha os dados que aparecerão no orçamento em PDF.</p>
+
           <form onSubmit={saveCompany}>
-            <input name="name" placeholder="Nome da marcenaria" required />
-            <input name="document" placeholder="CNPJ ou CPF" />
-            <input name="phone" placeholder="Telefone" />
-            <input name="whatsapp" placeholder="WhatsApp" />
-            <input name="email" placeholder="E-mail" />
-            <input name="address" placeholder="Endereço" />
-            <input name="responsible" placeholder="Responsável" />
-            <input name="pix" placeholder="Chave Pix" />
-            <textarea name="default_notes" placeholder="Observações padrão" />
-            <button>Salvar empresa</button>
+            <input name="name" placeholder="Nome da marcenaria" defaultValue={company?.name || ""} required />
+            <input name="document" placeholder="CNPJ ou CPF" defaultValue={company?.document || ""} />
+            <input name="phone" placeholder="Telefone" defaultValue={company?.phone || ""} />
+            <input name="whatsapp" placeholder="WhatsApp" defaultValue={company?.whatsapp || ""} />
+            <input name="email" placeholder="E-mail" defaultValue={company?.email || ""} />
+            <input name="address" placeholder="Endereço" defaultValue={company?.address || ""} />
+            <input name="responsible" placeholder="Responsável" defaultValue={company?.responsible || ""} />
+            <input name="pix" placeholder="Chave Pix" defaultValue={company?.pix || ""} />
+            <textarea
+              name="default_notes"
+              placeholder="Observações padrão"
+              defaultValue={company?.default_notes || ""}
+            />
+
+            <button>Salvar e continuar</button>
           </form>
         </>
       )}
 
       {screen === "client" && (
         <>
-          <h2>Cadastrar Cliente</h2>
+          <h2>Dados do Cliente</h2>
+
+          <p>Informe para quem será feito o orçamento.</p>
+
           <form onSubmit={saveClient}>
             <input name="name" placeholder="Nome do cliente" required />
             <input name="phone" placeholder="Telefone" />
             <input name="email" placeholder="E-mail" />
             <input name="address" placeholder="Endereço" />
-            <button>Salvar cliente</button>
+            <button>Continuar para orçamento</button>
           </form>
         </>
       )}
@@ -152,22 +225,33 @@ function App() {
         <>
           <h2>Criar Orçamento</h2>
 
-          {!clientId && <p>Cadastre um cliente antes de criar o orçamento.</p>}
-
           <form onSubmit={saveBudget}>
             <input name="title" placeholder="Título do orçamento" required />
-            <input name="environment" placeholder="Ambiente: cozinha, quarto..." />
+            <input name="environment" placeholder="Ambiente: cozinha, quarto, sala..." />
             <textarea name="description" placeholder="Descrição do projeto" />
 
-            <h3>Item 1</h3>
-            <input name="item1_description" placeholder="Descrição do item" required />
-            <input name="item1_quantity" placeholder="Quantidade" type="number" defaultValue="1" />
-            <input name="item1_price" placeholder="Valor unitário" type="number" required />
+            <h3>Itens do orçamento</h3>
 
-            <h3>Item 2</h3>
-            <input name="item2_description" placeholder="Descrição do item" />
-            <input name="item2_quantity" placeholder="Quantidade" type="number" />
-            <input name="item2_price" placeholder="Valor unitário" type="number" />
+            <div className="item-box">
+              <strong>Item 1</strong>
+              <input name="item1_description" placeholder="Descrição do item" required />
+              <input name="item1_quantity" placeholder="Quantidade" type="number" defaultValue="1" />
+              <input name="item1_price" placeholder="Valor unitário" type="number" required />
+            </div>
+
+            <div className="item-box">
+              <strong>Item 2</strong>
+              <input name="item2_description" placeholder="Descrição do item" />
+              <input name="item2_quantity" placeholder="Quantidade" type="number" />
+              <input name="item2_price" placeholder="Valor unitário" type="number" />
+            </div>
+
+            <div className="item-box">
+              <strong>Item 3</strong>
+              <input name="item3_description" placeholder="Descrição do item" />
+              <input name="item3_quantity" placeholder="Quantidade" type="number" />
+              <input name="item3_price" placeholder="Valor unitário" type="number" />
+            </div>
 
             <input name="discount" placeholder="Desconto" type="number" defaultValue="0" />
             <input name="extra_cost" placeholder="Acréscimo/Frete" type="number" defaultValue="0" />
@@ -176,7 +260,7 @@ function App() {
             <input name="validity" placeholder="Validade do orçamento" />
             <textarea name="notes" placeholder="Observações" />
 
-            <button disabled={!clientId}>Criar orçamento e gerar PDF</button>
+            <button>Criar orçamento e gerar PDF</button>
           </form>
         </>
       )}

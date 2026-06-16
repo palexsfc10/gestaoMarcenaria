@@ -5,18 +5,19 @@
 body {
   margin: 0;
   font-family: Inter, Arial, sans-serif;
-  background: linear-gradient(135deg, #111827, #1f2937);
+  background: #f8fafc;
   min-height: 100vh;
   color: #111827;
 }
 
 .container {
-  max-width: 920px;
-  margin: 40px auto;
+  max-width: 1080px;
+  margin: 32px auto;
   background: #ffffff;
   padding: 32px;
-  border-radius: 18px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  border-radius: 22px;
+  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
 }
 
 h1 {
@@ -172,5 +173,137 @@ section {
 
   .secondary {
     width: 100%;
+  }
+}
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+th,
+td {
+  padding: 14px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+tr:hover {
+  background: #f9fafb;
+}
+
+.small-button {
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.form-section {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #ffffff;
+}
+
+.form-section h3 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.form-label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.summary-box {
+  margin-top: 24px;
+  padding: 22px;
+  border-radius: 18px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.summary-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 22px;
+  font-weight: 800;
+  color: #ea580c;
+  border-top: 1px solid #fed7aa;
+  padding-top: 14px;
+}
+
+.item-box {
+  border: 1px solid #e5e7eb;
+  padding: 18px;
+  border-radius: 16px;
+  background: #f8fafc;
+  margin-bottom: 14px;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.remove-button {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.remove-button:hover {
+  background: #fecaca;
+}
+
+.add-button {
+  background: #111827;
+  margin-top: 8px;
+}
+
+.add-button:hover {
+  background: #000000;
+}
+
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }

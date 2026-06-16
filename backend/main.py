@@ -120,7 +120,19 @@ def create_budget(data: BudgetCreate, db: Session = Depends(get_db)):
 
 @app.get("/budgets")
 def list_budgets(db: Session = Depends(get_db)):
-    return db.query(Budget).all()
+    budgets = db.query(Budget).order_by(Budget.id.desc()).all()
+
+    return [
+        {
+            "id": budget.id,
+            "client_name": budget.client.name if budget.client else "-",
+            "title": budget.title,
+            "environment": budget.environment,
+            "total": budget.total,
+            "status": budget.status,
+        }
+        for budget in budgets
+    ]
 
 
 @app.get("/budgets/{budget_id}")
